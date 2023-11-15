@@ -1,8 +1,6 @@
 #version 330 core
 
 uniform float ROOM_SIZE;
-uniform mat4 view_matrix;
-
 
 uniform samplerCube cubemap_albedo;
 uniform samplerCube cubemap_normalmap;
@@ -10,23 +8,30 @@ uniform samplerCube cubemap_emission;
 
 uniform float room_depth;
 uniform float emission_strength;
-uniform vec3 light_source_pos;
 
 uniform vec3 simulated_camera_pos;
-uniform float light_intensity;
-uniform vec3 light_color = vec3(1., 1., 1.);
 
 in vec3 obj_vertex;
 flat in vec3 obj_cam;
-uniform float normal_intensity; // Add this line to declare the normal intensity scaler
-const float shininess = 32.0; // Or any other value you want for shininess
+
+out vec4 FragColor;
+
+uniform vec3 light_source_pos;
+uniform float light_intensity;
+uniform float normal_intensity;
+uniform vec3 light_color = vec3(1., 1., 1.);
+
+
+uniform float shininess = 32.0; // Or any other value you want for shininess
+
+
 float calculateShadowFactor(vec3 fragPos, vec3 normal) {
     // Your shadow calculation code goes here.
     // For now, let's return 1.0 to indicate no shadow.
     return 1.0;
 }
 
-out vec4 FragColor;
+
 vec3 calculateLighting(vec3 normal, vec3 fragPos, vec3 viewDir, vec3 lightPos, float lightIntensity) {
     vec3 lightDir = normalize(lightPos - fragPos);
     float distance = length(lightPos - fragPos);
@@ -55,11 +60,11 @@ vec3 calculateLighting(vec3 normal, vec3 fragPos, vec3 viewDir, vec3 lightPos, f
 }
 
 
+
 float remap_range(float value, float min_in, float max_in, float min_out, float max_out) {
     return (value - min_in) / (max_in - min_in) * (max_out - min_out) + min_out;
 }
 
-// Function to sample cubemap with better filtering
 vec3 sample_cubemap_better(samplerCube cubemap, vec3 direction) {
     return texture(cubemap, direction).rgb;
 }
@@ -151,17 +156,18 @@ void main() {
         
 		float scaler = 1./ROOM_SIZE;
 		cm_uv = (tex_coord*scaler + 1.);
-        
+
         cm_uv.x = clamp(cm_uv.x, 0., 1.);
         cm_uv.y = clamp(cm_uv.y, 0., 1.);
 
     }   
 
-    
-    // Apply the normal intensity scaler to the sampled normal
-    //vec3 normal = sample_cubemap_better(cubemap_normalmap, directionFromUV) * normal_intensity;
-    //vec3 lighting = calculateLighting(normal, obj_vertex, viewDir);
-    //FragColor = vec4(albedo * lighting, 1.0);
+
+    //vec3 directionFromUV = uvToDirection(cm_uv, (cm_face));
+    //directionFromUV = correct_cubemap(directionFromUV, cm_face);
+    //vec3 albedo = sample_cubemap_better(cubemap_albedo, directionFromUV);
+    //FragColor = vec4(albedo, 1.0);
+
     // Calculate the direction for sampling the cubemap
     vec3 direction = uvToDirection(cm_uv, cm_face);
     direction = correct_cubemap(direction, cm_face);
@@ -179,5 +185,5 @@ void main() {
     vec3 albedo = sample_cubemap_better(cubemap_albedo, direction);
 
     // Combine the albedo and lighting, and output the final color
-    FragColor = vec4(albedo, 1.0);
+    FragColor = vec4(albedo * lighting, 1.0);
 }

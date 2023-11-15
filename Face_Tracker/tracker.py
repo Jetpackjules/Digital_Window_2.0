@@ -85,7 +85,14 @@ display_webcam()
 #     # Retrieve the latest face position
 #     position = get_face_pos()
 #     if position:
-#         print(f"Detected Face Position (x, y, z): {position}")
+#         # Unpack the position tuple
+#         x, y, z = position
+#         # Round each coordinate to 2 decimal places
+#         x_rounded = round(x, 2)
+#         y_rounded = round(y, 2)
+#         z_rounded = round(z, 2)
+#         # Print the rounded position
+#         print(f"Detected Face Position (x, y, z): ({x_rounded}, {y_rounded}, {z_rounded})")
 #     # Sleep to prevent this loop from using 100% CPU
 #     time.sleep(0.1)
 

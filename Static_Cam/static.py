@@ -67,6 +67,7 @@ if fullscreen:
 
     # Create the window with the monitor's dimensions
     window = glfw.create_window(int(monitor_width*100/2.54*monitor_dpi), int(monitor_height*100/2.54*monitor_dpi), "Cubemap Viewer", None, None)
+
 else:
     window = glfw.create_window(800, 600, "GLFW Window", None, None)
     glfw.set_window_pos(window, 400, 200)

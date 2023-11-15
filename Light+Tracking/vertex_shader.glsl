@@ -20,7 +20,6 @@ void main() {
 
         obj_vertex = inVertex.xzy - delta;
 
-
         obj_cam = (inverse(modelViewMatrix) * vec4(0.0, 0.0, 0.0, 1.0)).xzy - delta;
         
         //adjusting for perspective:

@@ -22,12 +22,11 @@ import tracker
 
 #Window info:
 monitor_width, monitor_height, monitor_dpi = monitor_info.get_monitor_dimensions() #Display size in meters, with pixels per inch as the last var
-aspect_ratio = monitor_width / monitor_height
 
 # Parameters (CHANGE THESE AT WILL!)
 ROOM_DEPTH: float = 2
-ROOM_SIZE: float = monitor_height
-QUAD_SIZE: float = monitor_height  # Change this value to scale the quad
+ROOM_SIZE: float = monitor_height/2.
+QUAD_SIZE: float = monitor_height/2.  # Change this value to scale the quad
 
 Background_Color = glm.vec4(0.8, 0.8, 0.8, 1.0)
 fullscreen = True
@@ -36,10 +35,8 @@ normal_intensity = 1.0  # Adjust this value to scale the normals
 shininess = 32.0
 
 
-fov = glm.radians(90)
-# distance_from_quad = fov_calculator.calculate_distance_for_fov(monitor_height, 90)
-# print(distance_from_quad)
-distance_from_quad = 1.1
+
+distance_from_quad = 1.0 #Since this is ortho this has no bearing on actual render, just has to be a positive number...
 camera_pos = glm.vec3(0.0, 0.0, distance_from_quad)
 
 simulated_camera_pos = glm.vec3(0.0, 1.0, 0.0)
@@ -165,12 +162,6 @@ glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_normal)
 cubemap_normal_location = glGetUniformLocation(shader_program, "cubemap_normalmap")
 glUniform1i(cubemap_normal_location, 1)  # 1 refers to GL_TEXTURE1
 
-
-# Set the texture wrapping parameter for the s and t (u and v) axes (this should grow the cubemap if the quad is bigger????)
-# glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-# glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-# glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
-
 cubemap_location = glGetUniformLocation(shader_program, "cubemap_albedo")
 glUniform1i(cubemap_location, 0)  # 0 refers to GL_TEXTURE0
 
@@ -233,7 +224,7 @@ get_shader_deets.modify(shader_program, "ROOM_SIZE", ROOM_SIZE)
 
 #some cam variables:
 near_plane = 0.001
-far_plane = 1000.0
+far_plane = 100000.0
 
 # Main loop
 while not glfw.window_should_close(window):
@@ -254,14 +245,6 @@ while not glfw.window_should_close(window):
     # Now, you can pass this matrix to your shader:
     location = glGetUniformLocation(shader_program, "modelViewMatrix")
     glUniformMatrix4fv(location, 1, GL_FALSE, glm.value_ptr(modelViewMatrix))
-
-    # projection matrix computation: --------------------
-    
-    projection_matrix = glm.perspective(fov, aspect_ratio, near_plane, far_plane)
-
-    # Now, you can pass this matrix to your shader:
-    location = glGetUniformLocation(shader_program, "projectionMatrix")
-    glUniformMatrix4fv(location, 1, GL_FALSE, glm.value_ptr(projection_matrix))
 
     # -------------------------------------------------------------
     # TRYING ORTHOGRAPHIC PROJECTION MATRIX:::
@@ -294,8 +277,6 @@ while not glfw.window_should_close(window):
 
     # ------------------------------------------------------------
 
-
-
     # PASSING IN FAKE CAM POS:
     # acuro_pos = acuro.get_acuro_pos()
     acuro_pos = tracker.get_face_pos()
@@ -305,9 +286,8 @@ while not glfw.window_should_close(window):
         simulated_camera_pos.z = round(-acuro_pos[1]+monitor_height/2, 3)
 
         #ADJUST POS FOR WEIRD ACURO SCALING!!
-        simulated_camera_pos.y = round(acuro_pos[2]/2+distance_from_quad, 3)
+        simulated_camera_pos.y = round(acuro_pos[2], 3)
         
-        # print(simulated_camera_pos.xyz)
     glUniform3f(simulated_camera_pos_location, simulated_camera_pos.x, simulated_camera_pos.y, simulated_camera_pos.z)
 
     #Draw the actual quad:

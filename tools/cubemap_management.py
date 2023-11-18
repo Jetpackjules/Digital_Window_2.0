@@ -19,7 +19,7 @@ def convert_jpg_to_png(folder_path):
             img.save(png_path)
             print(f'Converted "{jpg_path}" to "{png_path}"')
 
-def load_cubemap(folder_path, new_size=(512*2.0, 512*2.0)):
+def load_cubemap(folder_path, new_size=(512, 512)):
     # Set the directory you want to rename files in
 
     # REMOVE "_NORMAL" PREFIX! 
@@ -68,9 +68,9 @@ def load_cubemap(folder_path, new_size=(512*2.0, 512*2.0)):
     # Set texture parameters
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_REPEAT)
 
 
     # Create a single image from the list and display it
@@ -81,3 +81,27 @@ def load_cubemap(folder_path, new_size=(512*2.0, 512*2.0)):
 
     return textureID
 
+
+
+def load_texture(path):
+    texture = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture)
+    
+    # Set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+    
+    # Set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    
+    # Load image
+    image = Image.open(path)
+    image = image.transpose(Image.FLIP_TOP_BOTTOM)
+    img_data = image.convert("RGBA").tobytes()
+    
+    # Use the image data to create a texture
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
+    glGenerateMipmap(GL_TEXTURE_2D)
+    
+    return texture

@@ -21,11 +21,26 @@ in vec3 obj_vertex;
 flat in vec3 obj_cam;
 uniform float normal_intensity; // Add this line to declare the normal intensity scaler
 const float shininess = 32.0; // Or any other value you want for shininess
-float calculateShadowFactor(vec3 fragPos, vec3 normal) {
-    // Your shadow calculation code goes here.
-    // For now, let's return 1.0 to indicate no shadow.
-    return 1.0;
+
+float calculateShadowFactor(vec3 fragPos, vec3 normal, vec3 lightPos) {
+    // Calculate vector from fragment position to light
+    vec3 lightDir = normalize(lightPos - fragPos);
+
+    // Calculate the angle between the light direction and the fragment's normal
+    float diff = max(dot(normal, lightDir), 0.0);
+
+    // Use the angle to reduce the shadow intensity as the angle gets smaller
+    float shadowFactor = smoothstep(0.0, 1.0, diff);
+
+    // Optional: Use distance to simulate light attenuation
+    float distance = length(lightPos - fragPos);
+    float attenuation = 1.0 / (distance * distance);
+    shadowFactor *= attenuation;
+
+    return shadowFactor;
 }
+
+
 
 out vec4 FragColor;
 vec3 calculateLighting(vec3 normal, vec3 fragPos, vec3 viewDir, vec3 lightPos, float lightIntensity) {
@@ -50,7 +65,7 @@ vec3 calculateLighting(vec3 normal, vec3 fragPos, vec3 viewDir, vec3 lightPos, f
     float spec = pow(max(dot(normal, halfVec), 0.0), shininess);
     vec3 diffuse = diff * light_color.rgb * lightIntensity;
     vec3 specular = spec * light_color.rgb * lightIntensity;
-    float shadowFactor = calculateShadowFactor(fragPos, normal);
+    float shadowFactor = calculateShadowFactor(fragPos, normal, light_source_pos);
     
     return (diffuse + specular) * shadowFactor;
 }

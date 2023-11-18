@@ -25,16 +25,9 @@ monitor_width, monitor_height, monitor_dpi = monitor_info.get_monitor_dimensions
 aspect_ratio = monitor_width / monitor_height
 
 # Parameters (CHANGE THESE AT WILL!)
-ROOM_DEPTH: float = 4
-ROOM_SIZE: float = monitor_width
-
-# QUAD_SIZE: float = monitor_height  # Change this value to scale the quad
-QUAD_HEIGHT: float = monitor_height
-QUAD_WIDTH: float = monitor_width
-
-ROOM_HEIGHT: float = monitor_height
-ROOM_WIDTH: float = monitor_width
-
+ROOM_DEPTH: float = 2
+ROOM_SIZE: float = monitor_height
+QUAD_SIZE: float = monitor_height  # Change this value to scale the quad
 
 Background_Color = glm.vec4(0.8, 0.8, 0.8, 1.0)
 fullscreen = True
@@ -100,10 +93,10 @@ if not window:
 glfw.make_context_current(window)
 
 # Load shaders from files
-with open('aspect_ratio_test/vertex_shader.glsl', 'r') as f:
+with open('FINAL_WITH_BORDER_WALL/vertex_shader.glsl', 'r') as f:
     vertex_shader_source = f.read()
 
-with open('aspect_ratio_test/fragment_shader.glsl', 'r') as f:
+with open('FINAL_WITH_BORDER_WALL/fragment_shader.glsl', 'r') as f:
     fragment_shader_source = f.read()
 
 
@@ -120,10 +113,10 @@ glUseProgram(shader_program)
 
 vertices = [
     # Positions                 # UVs
-    -QUAD_WIDTH/2,  QUAD_HEIGHT/2, 0.0,  0.0, 1.0,
-    -QUAD_WIDTH/2, -QUAD_HEIGHT/2, 0.0,  0.0, 0.0,
-     QUAD_WIDTH/2, -QUAD_HEIGHT/2, 0.0,  1.0, 0.0,
-     QUAD_WIDTH/2,  QUAD_HEIGHT/2, 0.0,  1.0, 1.0
+    -QUAD_SIZE/2,  QUAD_SIZE/2, 0.0,  0.0, 1.0,
+    -QUAD_SIZE/2, -QUAD_SIZE/2, 0.0,  0.0, 0.0,
+     QUAD_SIZE/2, -QUAD_SIZE/2, 0.0,  1.0, 0.0,
+     QUAD_SIZE/2,  QUAD_SIZE/2, 0.0,  1.0, 1.0
 ]
 
 indices = [
@@ -167,7 +160,7 @@ glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap)
 
 # # Initializing normal cubemap
 glActiveTexture(GL_TEXTURE1)  # Use the second texture unit
-cubemap_normal = cubemap_management.load_cubemap("cubemap_rect_normal")
+cubemap_normal = cubemap_management.load_cubemap("cubemap_normal")
 glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_normal)
 cubemap_normal_location = glGetUniformLocation(shader_program, "cubemap_normalmap")
 glUniform1i(cubemap_normal_location, 1)  # 1 refers to GL_TEXTURE1
@@ -237,11 +230,6 @@ glClearColor(Background_Color.r, Background_Color.g, Background_Color.b, Backgro
 # setting values...
 get_shader_deets.modify(shader_program, "room_depth", ROOM_DEPTH)
 get_shader_deets.modify(shader_program, "ROOM_SIZE", ROOM_SIZE)
-get_shader_deets.modify(shader_program, "ROOM_SIZE", ROOM_WIDTH)
-
-get_shader_deets.modify(shader_program, "ROOM_WIDTH", ROOM_WIDTH)
-get_shader_deets.modify(shader_program, "ROOM_HEIGHT", ROOM_HEIGHT)
-
 
 #some cam variables:
 near_plane = 0.001
@@ -305,8 +293,6 @@ while not glfw.window_should_close(window):
     glUniform1f(normal_intensity_location, normal_intensity)
 
     # ------------------------------------------------------------
-
-
 
     # PASSING IN FAKE CAM POS:
     # acuro_pos = acuro.get_acuro_pos()

@@ -23,7 +23,7 @@ void main() {
         obj_cam = (inverse(modelViewMatrix) * vec4(0.0, 0.0, 0.0, 1.0)).xzy - delta;
         
         //adjusting for perspective:
-        obj_cam = simulated_camera_pos - delta;
+        obj_cam += simulated_camera_pos;
     }
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(inVertex, 1.0);

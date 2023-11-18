@@ -12,6 +12,10 @@ layout(location = 0) in vec3 inVertex;
 out vec3 obj_vertex;
 flat out vec3 obj_cam;
 
+layout(location = 1) in vec3 TexCoordsCustom;
+out vec3 TexCoordsProcessed;
+
+
 
 void main() {
     if (room_depth != 0.0) {
@@ -25,6 +29,9 @@ void main() {
         //adjusting for perspective:
         obj_cam = simulated_camera_pos - delta;
     }
+
+
+    TexCoordsProcessed = TexCoordsCustom;
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(inVertex, 1.0);
 }

@@ -15,8 +15,6 @@ uniform vec3 simulated_camera_pos;
 in vec3 obj_vertex;
 flat in vec3 obj_cam;
 
-in vec2 TexCoords;
-
 out vec4 FragColor;
 
 uniform vec3 light_source_pos;
@@ -24,6 +22,7 @@ uniform float light_intensity;
 uniform float normal_intensity;
 uniform vec3 light_color = vec3(1., 1., 1.);
 
+in vec3 TexCoordsProcessed;
 
 uniform float shininess = 32.0; // Or any other value you want for shininess
 
@@ -107,14 +106,22 @@ vec3 uvToDirection(vec2 uv, vec3 face) {
 
 void main() {
     if (wall) {
-        FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        // Remap TexCoordsProcessed from [0, 1] to [-1, 1]
+        vec2 remappedCoords = TexCoordsProcessed.xy * 2.0 - 1.0;
+
+        // Sample the left face of the cubemap
+        vec3 dir = vec3(-1.0, -remappedCoords.y, remappedCoords.x);
+        vec3 color = texture(cubemap_normalmap, dir).rgb;
+
+        // Output the color
+        FragColor = vec4(color, 1.0);
+    
+    
     } else {
             
         vec3 cm_face = vec3(0., 0., 1.);
         vec2 cm_uv = vec2(0,0);
-            
-        //cm_uv.xy = cm_uv.yx;
-            
+                        
         if (room_depth != 0.) {
             float depth = room_depth * ROOM_SIZE;
             vec3 cam2pix = obj_vertex - obj_cam;

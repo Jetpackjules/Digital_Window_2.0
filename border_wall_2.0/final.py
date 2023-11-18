@@ -181,6 +181,12 @@ position = glGetAttribLocation(shader_program, "inVertex")
 glEnableVertexAttribArray(position)
 glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(0))
 
+# Enable and set the pointer for texture coordinates
+texCoord = glGetAttribLocation(shader_program, "TexCoordsCustom")  # Change "inTexCoord" to the name used in your shader
+print(texCoord)
+glEnableVertexAttribArray(texCoord)
+glVertexAttribPointer(texCoord, 2, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(3 * 4))
+
 
 # glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
 # glBindBuffer(GL_ARRAY_BUFFER, VBO)

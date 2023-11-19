@@ -21,6 +21,7 @@ def convert_jpg_to_png(folder_path):
 
 def load_cubemap(folder_path, new_size=(512, 512)):
     # Set the directory you want to rename files in
+    folder_path = "cubemaps/"+folder_path
 
     # REMOVE "_NORMAL" PREFIX! 
     for filename in os.listdir(folder_path):
@@ -56,6 +57,7 @@ def load_cubemap(folder_path, new_size=(512, 512)):
         img_path = os.path.join(folder_path, face_name)
         img = Image.open(img_path)
         img = img.resize(new_size, Image.ANTIALIAS)  # Resize the image on-the-fly
+        img = img.convert('RGB')
         img_data = img.tobytes("raw", "RGB", 0, -1)
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
                      0, GL_RGB, img.width, img.height, 

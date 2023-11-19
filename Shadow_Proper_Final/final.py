@@ -15,9 +15,9 @@ sys.path.append(os.path.join(parent_dir, 'Face_Tracker'))
 import cubemap_management
 import get_shader_deets
 import monitor_info
+# import acuro
 import fov_calculator
-# import tracker
-import acuro
+import tracker
 
 
 #Window info:
@@ -90,10 +90,10 @@ if not window:
 glfw.make_context_current(window)
 
 # Load shaders from files
-with open('border_wall_2.0/vertex_shader.glsl', 'r') as f:
+with open('Shadow_Proper_Final/vertex_shader.glsl', 'r') as f:
     vertex_shader_source = f.read()
 
-with open('border_wall_2.0/fragment_shader.glsl', 'r') as f:
+with open('Shadow_Proper_Final/fragment_shader.glsl', 'r') as f:
     fragment_shader_source = f.read()
 
 
@@ -194,13 +194,13 @@ glVertexAttribPointer(texCoord, 2, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(3 
 
 
 #initing cubemap:
-cubemap = cubemap_management.load_cubemap("cubemap_bricks")
+cubemap = cubemap_management.load_cubemap("cubemap")
 glActiveTexture(GL_TEXTURE0)  # Use the first texture unit
 glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap)
 
 # # Initializing normal cubemap
 glActiveTexture(GL_TEXTURE1)  # Use the second texture unit
-cubemap_normal = cubemap_management.load_cubemap("cubemap_bricks_normal")
+cubemap_normal = cubemap_management.load_cubemap("cubemap_normal")
 glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap_normal)
 cubemap_normal_location = glGetUniformLocation(shader_program, "cubemap_normalmap")
 glUniform1i(cubemap_normal_location, 1)  # 1 refers to GL_TEXTURE1
@@ -213,7 +213,6 @@ camera_target = glm.vec3(0.0, 0.0, 0.0)
 camera_up = glm.vec3(0.0, 1.0, 0.0)
 
 def key_callback(window, key, scancode, action, mods):
-    glUseProgram(shader_program)
     global light_source_pos, light_power, normal_intensity, shininess, simulated_camera_pos
     move_speed = 0.1  # Adjust this value for faster/slower movement
 
@@ -254,8 +253,6 @@ def key_callback(window, key, scancode, action, mods):
         
         get_shader_deets.modify(shader_program, "shininess", shininess)
 
-
-
 glfw.set_key_callback(window, key_callback)
 simulated_camera_pos_location = glGetUniformLocation(shader_program, "simulated_camera_pos")
 
@@ -273,6 +270,61 @@ get_shader_deets.modify(shader_program, "wall", False)
 near_plane = 0.001
 far_plane = 100000.0
 
+# ------------------------------------------------------------------------------ SHADOW SHIT
+# Function to compile shaders and create a shader program
+def create_shader_program(vertex_source_path, fragment_source_path):
+    with open(vertex_source_path, 'r') as file:
+        vertex_shader_source = file.read()
+    with open(fragment_source_path, 'r') as file:
+        fragment_shader_source = file.read()
+
+    vertex_shader = compileShader(vertex_shader_source, GL_VERTEX_SHADER)
+    check_shader_compilation(vertex_shader)
+    fragment_shader = compileShader(fragment_shader_source, GL_FRAGMENT_SHADER)
+    check_shader_compilation(fragment_shader)
+
+    shader_program = compileProgram(vertex_shader, fragment_shader)
+    check_program_linking(shader_program)
+
+    return shader_program
+
+# Initialize the shadow shader program
+shadow_shader_program = create_shader_program('Shadow_Proper_Final\shadow_vertex_shader.glsl', 'Shadow_Proper_Final\shadow_fragment_shader.glsl')
+
+
+# Shadow mapping parameters
+SHADOW_WIDTH = 1024
+SHADOW_HEIGHT = 1024
+
+# Create depth texture
+depthMapFBO = glGenFramebuffers(1)
+depthMap = glGenTextures(1)
+glActiveTexture(GL_TEXTURE2)  # Use a different texture unit
+glBindTexture(GL_TEXTURE_2D, depthMap)
+glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 
+             SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, None)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER)
+glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER)
+borderColor = [1.0, 1.0, 1.0, 1.0]
+glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor)
+
+# Attach depth texture as FBO's depth buffer
+glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO)
+glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0)
+glDrawBuffer(GL_NONE)
+glReadBuffer(GL_NONE)
+glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+
+
+
+# Render the scene from the light's perspective
+# ... (render your objects here)
+
+# Unbind the shadow map FBO
+# glBindFramebuffer(GL_FRAMEBUFFER, 0)
 
 
 # Main loop
@@ -328,8 +380,8 @@ while not glfw.window_should_close(window):
     # ------------------------------------------------------------
 
     # PASSING IN FAKE CAM POS:
-    acuro_pos = acuro.get_acuro_pos()
-    # acuro_pos = tracker.get_face_pos()
+    # acuro_pos = acuro.get_acuro_pos()
+    acuro_pos = tracker.get_face_pos()
 
     if (acuro_pos is not None):
         simulated_camera_pos.x = round(-acuro_pos[0], 3)
@@ -364,7 +416,47 @@ while not glfw.window_should_close(window):
     glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(0))
 
     glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, None)
-    # ---------------------------------------------------------------------------------------
+    # --------------------------------------------------------------------------------------- LIGHT STUFF:
+
+    # Bind the shadow map FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO)
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT)
+    glClear(GL_DEPTH_BUFFER_BIT)
+
+    # Use the shadow shader program
+    glUseProgram(shadow_shader_program)
+
+    # Set up light's perspective view and projection
+    lightProjection = glm.ortho(-10.0, 10.0, -10.0, 10.0, near_plane, far_plane)
+    lightView = glm.lookAt(light_source_pos, glm.vec3(0.0), glm.vec3(0.0, 1.0, 0.0))
+    lightSpaceMatrix = lightProjection * lightView
+
+    # Pass lightSpaceMatrix to shadow shader
+    lightSpaceMatrixLoc = glGetUniformLocation(shadow_shader_program, "lightSpaceMatrix")
+    glUniformMatrix4fv(lightSpaceMatrixLoc, 1, GL_FALSE, glm.value_ptr(lightSpaceMatrix))
+    
+    # RENDERING SCNEEE =======================================================================================
+    # Bind the default framebuffer
+    # glViewport(0, 0, int(monitor_width*100/2.54*monitor_dpi), int(monitor_height*100/2.54*monitor_dpi))
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+    # Use the main shader program
+    glUseProgram(shader_program)
+
+    # Bind the shadow map as a texture
+    glActiveTexture(GL_TEXTURE2)  # Use a different texture unit
+    glBindTexture(GL_TEXTURE_2D, depthMap)
+    shadowMapLoc = glGetUniformLocation(shader_program, "shadowMap")
+    glUniform1i(shadowMapLoc, 2)  # Corresponds to GL_TEXTURE2
+
+
+
+
+    # Unbind the shadow map FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+    glUseProgram(shader_program)
+
 
     glfw.swap_buffers(window)
 

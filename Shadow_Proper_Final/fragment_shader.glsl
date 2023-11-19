@@ -26,11 +26,28 @@ in vec3 TexCoordsProcessed;
 
 uniform float shininess = 32.0; // Or any other value you want for shininess
 
+uniform sampler2D shadowMap; // Shadow map texture
+uniform mat4 lightSpaceMatrix; // Matrix to transform from world space to light's clip space
 
 float calculateShadowFactor(vec3 fragPos, vec3 normal) {
-    // Your shadow calculation code goes here.
-    // For now, let's return 1.0 to indicate no shadow.
-    return 1.0;
+    // Transform the fragment position to light space
+    vec4 fragPosLightSpace = lightSpaceMatrix * vec4(fragPos, 1.0);
+    fragPosLightSpace.xyz /= fragPosLightSpace.w;
+    fragPosLightSpace.xyz = fragPosLightSpace.xyz * 0.5 + 0.5; // Transform to [0,1] range
+
+    // Get the closest depth value from the light's perspective
+    float closestDepth = texture(shadowMap, fragPosLightSpace.xy).r; 
+
+    // Check if current fragment is in shadow
+    float shadow = 0.0;
+    vec3 projCoords = fragPosLightSpace.xyz;
+    float currentDepth = projCoords.z;
+    if (projCoords.z > 1.0) // Check if it's outside the frustum of the light's perspective
+        shadow = 0.0;
+    else
+        shadow = currentDepth > closestDepth  ? 1.0 : 0.0; // Shadow if fragment is behind the closest depth
+
+    return 1.0 - shadow; // 1.0 if not in shadow, less if in shadow
 }
 
 
@@ -116,8 +133,8 @@ void main() {
         vec3 albedo = texture(cubemap_albedo, dir).rgb;
 
         // Sample the normal map from the left face of the cubemap
-        vec3 normal = sample_cubemap_better(cubemap_normalmap, dir) * normal_intensity;
-        
+        vec3 normal = texture(cubemap_normalmap, dir).rgb;
+        normal = normalize(normal * 2.0 - 1.0); // Convert from [0,1] to [-1,1]
 
         // Calculate the view direction
         vec3 viewDir = normalize(simulated_camera_pos - obj_vertex);
@@ -204,8 +221,11 @@ void main() {
         // Calculate the view direction
         vec3 viewDir = normalize(simulated_camera_pos - obj_vertex);
 
-        // Calculate the lighting with attenuation
-        vec3 lighting = calculateLighting(normal, obj_vertex, viewDir, light_source_pos, light_intensity);
+
+
+        // Calculate shadow factor
+        float shadowFactor = calculateShadowFactor(obj_vertex, normal);
+        vec3 lighting = calculateLighting(normal, obj_vertex, viewDir, light_source_pos, light_intensity) * shadowFactor;
 
         // Sample the albedo from the cubemap
         vec3 albedo = sample_cubemap_better(cubemap_albedo, direction);

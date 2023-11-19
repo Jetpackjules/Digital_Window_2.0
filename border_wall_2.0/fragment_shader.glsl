@@ -106,22 +106,33 @@ vec3 uvToDirection(vec2 uv, vec3 face) {
 
 void main() {
     if (wall) {
-        // Remap TexCoordsProcessed from [0, 1] to [-1, 1]
-        vec2 remappedCoords = TexCoordsProcessed.xy * 2.0 - 1.0;
+        // Remap TexCoordsProcessed from [0, 1] to [-1, 1] and then scale to repeat 3 times
+        vec2 remappedCoords = mod(TexCoordsProcessed.xy * 6.0, 2.0) - 1.0;
 
-        // Sample the left face of the cubemap
-        vec3 dir = vec3(-1.0, -remappedCoords.y, remappedCoords.x);
-        vec3 color = texture(cubemap_normalmap, dir).rgb;
+        // Direction for sampling the left face of the cubemap
+        vec3 dir = vec3(remappedCoords.x, -1.0, -remappedCoords.y);
 
-        // Output the color
-        FragColor = vec4(color, 1.0);
-    
-    
+        // Sample the albedo from the left face of the cubemap
+        vec3 albedo = texture(cubemap_albedo, dir).rgb;
+
+        // Sample the normal map from the left face of the cubemap
+        vec3 normal = texture(cubemap_normalmap, dir).rgb;
+        normal = normalize(normal * 2.0 - 1.0); // Convert from [0,1] to [-1,1]
+
+        // Calculate the view direction
+        vec3 viewDir = normalize(simulated_camera_pos - obj_vertex);
+
+        // Calculate the lighting with attenuation
+        vec3 lighting = calculateLighting(normal, obj_vertex, viewDir, light_source_pos, light_intensity);
+
+        // Combine the albedo and lighting, and output the final color
+        FragColor = vec4(albedo * lighting, 1.0);
     } else {
             
         vec3 cm_face = vec3(0., 0., 1.);
         vec2 cm_uv = vec2(0,0);
-                        
+
+
         if (room_depth != 0.) {
             float depth = room_depth * ROOM_SIZE;
             vec3 cam2pix = obj_vertex - obj_cam;

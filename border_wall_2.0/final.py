@@ -25,8 +25,8 @@ monitor_width, monitor_height, monitor_dpi = monitor_info.get_monitor_dimensions
 
 # Parameters (CHANGE THESE AT WILL!)
 ROOM_DEPTH: float = 2
-ROOM_SIZE: float = monitor_height/2.
-QUAD_SIZE: float = monitor_height/2.  # Change this value to scale the quad
+ROOM_SIZE: float = monitor_height/1.5
+QUAD_SIZE: float = monitor_height/1.5  # Change this value to scale the quad
 
 Background_Color = glm.vec4(0.8, 0.8, 0.8, 1.0)
 fullscreen = True
@@ -146,10 +146,10 @@ offset = QUAD_SIZE
 
 red_quad_vertices = [
     # Positions                 # UVs
-    -QUAD_SIZE/2 - offset,  QUAD_SIZE/2, 0.0,  0.0, 1.0,
-    -QUAD_SIZE/2 - offset, -QUAD_SIZE/2, 0.0,  0.0, 0.0,
-     QUAD_SIZE/2 - offset, -QUAD_SIZE/2, 0.0,  1.0, 0.0,
-     QUAD_SIZE/2 - offset,  QUAD_SIZE/2, 0.0,  1.0, 1.0
+    -QUAD_SIZE/2 - offset,  QUAD_SIZE/2+offset, 0.0,  0.0, 1.0,
+    -QUAD_SIZE/2 - offset, -QUAD_SIZE/2-offset, 0.0,  0.0, 0.0,
+     QUAD_SIZE/2 + offset, -QUAD_SIZE/2-offset, 0.0,  1.0, 0.0,
+     QUAD_SIZE/2 + offset,  QUAD_SIZE/2+offset, 0.0,  1.0, 1.0
 ]
 
 # Create VBO and EBO for the red quad
@@ -342,14 +342,7 @@ while not glfw.window_should_close(window):
 
 
 
-    # RENDERING CENTER QUAD: ---------------------------------------------------------------
 
-    # Bind the VBO and EBO for the red quad
-    glBindBuffer(GL_ARRAY_BUFFER, VBO)
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
-    glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(0))
-
-    glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, None)
 
     # RENDERING WALL QUAD(S): ---------------------------------------------------------------
 
@@ -363,8 +356,15 @@ while not glfw.window_should_close(window):
     glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, None)
     get_shader_deets.modify(shader_program, "wall", False)
 
-    # ---------------------------------------------------------------------------------------
+    # RENDERING CENTER QUAD: ---------------------------------------------------------------
 
+    # Bind the VBO and EBO for the red quad
+    glBindBuffer(GL_ARRAY_BUFFER, VBO)
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
+    glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(0))
+
+    glDrawElements(GL_TRIANGLES, len(indices), GL_UNSIGNED_INT, None)
+    # ---------------------------------------------------------------------------------------
 
     glfw.swap_buffers(window)
 

@@ -27,7 +27,10 @@ def get_acuro_pos():
     
     if len(corners) > 0:
         rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(corners, markerLength, cameraMatrix, distCoeffs)
+        # Doing some math to properly scale distance to camera:
+        tvecs[0][0][2] = -0.004947+0.3674*tvecs[0][0][2]
         return tvecs[0][0]  # Return the position of the first detected acuro
+        
     return None
 
 def calculate_distance(position):
@@ -57,7 +60,7 @@ def cam_loop():
 
                 # Display the Depth, X offset, Y offset, and Overall Distance
                 #adjusting for weird depth overestimation...
-                new_depth = (position[2]+0.0439)/2.376
+                new_depth = position[2]
 
                 text = f"Depth: {new_depth:.2f}m, X offset: {position[0]:.2f}m, Y offset: {position[1]:.2f}m, Distance: {distance:.2f}m"
                 font_scale = 0.5
@@ -93,7 +96,29 @@ def display_webcam():
 
 display_webcam()
 # Example usage:
-position = get_acuro_pos()
-if position is not None:
-    distance = calculate_distance(position)
-    print(f"Detected Acuro Position (x, y, z): {position}, Overall Distance: {distance}")
+# position = get_acuro_pos()
+# if position is not None:
+#     distance = calculate_distance(position)
+#     print(f"Detected Acuro Position (x, y, z): {position}, Overall Distance: {distance}")
+
+
+# Main thread doing other tasks
+import keyboard
+import time
+
+while True:
+    
+    # Check if space key is pressed
+    if keyboard.is_pressed('space'):
+        # Retrieve the latest face position
+        position = get_acuro_pos()
+        # Unpack the position tuple
+        x, y, z = position
+        # Round each coordinate to 2 decimal places
+        x_rounded = round(x, 2)
+        y_rounded = round(y, 2)
+        z_rounded = round(z, 2)
+        # Print the rounded position
+        print(f"Detected Acuro Position (x, y, z): ({x_rounded}, {y_rounded}, {z_rounded})")
+        # Add a small delay to prevent multiple prints on a single key press
+        time.sleep(0.2)

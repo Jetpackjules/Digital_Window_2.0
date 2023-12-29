@@ -16,8 +16,8 @@ import cubemap_management
 import get_shader_deets
 import monitor_info
 import fov_calculator
-# import tracker
-import acuro
+import tracker
+# import acuro
 
 
 #Window info:
@@ -328,8 +328,8 @@ while not glfw.window_should_close(window):
     # ------------------------------------------------------------
 
     # PASSING IN FAKE CAM POS:
-    acuro_pos = acuro.get_acuro_pos()
-    # acuro_pos = tracker.get_face_pos()
+    # acuro_pos = acuro.get_acuro_pos()
+    acuro_pos = tracker.get_face_pos()
 
     if (acuro_pos is not None):
         simulated_camera_pos.x = round(-acuro_pos[0], 3)

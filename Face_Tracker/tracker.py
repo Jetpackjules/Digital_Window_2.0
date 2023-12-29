@@ -57,7 +57,7 @@ def cam_loop():
 
 
                 with lock:
-                    face_position = [x_meters, y_meters, z_meters]
+                    face_position = [x_meters, y_meters, 0.039387+0.5744*z_meters]
 
             # Display the resulting frame
             cv2.imshow('Webcam Feed', frame)
@@ -80,22 +80,28 @@ def display_webcam():
 # Start the webcam display
 display_webcam()
 
+import time
+import keyboard
+
 # Main thread doing other tasks
 # while running:
-#     # Retrieve the latest face position
-#     position = get_face_pos()
-#     if position:
-#         # Unpack the position tuple
-#         x, y, z = position
-#         # Round each coordinate to 2 decimal places
-#         x_rounded = round(x, 2)
-#         y_rounded = round(y, 2)
-#         z_rounded = round(z, 2)
-#         # Print the rounded position
-#         print(f"Detected Face Position (x, y, z): ({x_rounded}, {y_rounded}, {z_rounded})")
-#     # Sleep to prevent this loop from using 100% CPU
-#     time.sleep(0.1)
+    
+    # # Check if space key is pressed
+    # if keyboard.is_pressed('space'):
+    #     # Retrieve the latest face position
+    #     position = get_face_pos()
+    #     if position:
+    #         # Unpack the position tuple
+    #         x, y, z = position
+    #         # Round each coordinate to 2 decimal places
+    #         x_rounded = round(x, 2)
+    #         y_rounded = round(y, 2)
+    #         z_rounded = round(z, 2)
+    #         # Print the rounded position
+    #         print(f"Detected Face Position (x, y, z): ({x_rounded}, {y_rounded}, {z_rounded})")
+    #     # Add a small delay to prevent multiple prints on a single key press
+    #     time.sleep(0.2)
 
 print("Stopping the webcam display...")
 # No need to join the thread since it's daemonized
-cv2.destroyAllWindows()
+# cv2.destroyAllWindows()
